@@ -30,6 +30,7 @@ def _bull_call(px: float, cfg: Config) -> Dict[str, Any]:
     breakeven = round(long_strike + net_debit, 2)
     return {
         "name": "Bull Call Debit Spread",
+        "type": "Bullish",
         "expiry": _nearest_monthly_expiry(cfg.default_dte_days).isoformat(),
         "legs": [
             {"type": "CALL", "side": "LONG", "strike": long_strike},
@@ -55,6 +56,7 @@ def _bull_put(px: float, cfg: Config) -> Dict[str, Any]:
     breakeven = round(short_strike - net_credit, 2)
     return {
         "name": "Bull Put Credit Spread",
+        "type": "Bullish",
         "expiry": _nearest_monthly_expiry(cfg.default_dte_days).isoformat(),
         "legs": [
             {"type": "PUT", "side": "SHORT", "strike": short_strike},
@@ -77,6 +79,7 @@ def _cash_secured_put(px: float, cfg: Config) -> Dict[str, Any]:
     basis = round(strike - credit, 2)
     return {
         "name": "Cash-Secured Put",
+        "type": "Income",
         "expiry": _nearest_monthly_expiry(cfg.default_dte_days).isoformat(),
         "legs": [{"type": "PUT", "side": "SHORT", "strike": strike}],
         "estimates": {"credit": credit, "assigned_basis": basis},
@@ -91,6 +94,7 @@ def _covered_call(px: float, cfg: Config) -> Dict[str, Any]:
     return {
         "name": "Covered Call",
         "precondition": "Own ≥100 shares",
+        "type": "Income",
         "expiry": _nearest_monthly_expiry(cfg.default_dte_days).isoformat(),
         "legs": [{"type": "CALL", "side": "SHORT", "strike": strike}],
         "estimates": {"credit": credit, "capped_upside": True},
@@ -99,18 +103,58 @@ def _covered_call(px: float, cfg: Config) -> Dict[str, Any]:
     }
 
 
-def pick_strategies(px: float, iv_rank: Optional[float], holding_shares: int, cfg: Config) -> List[Dict[str, Any]]:
-    """Select low-risk strategies given price and volatility regime."""
+def _protective_put(px: float, cfg: Config) -> Dict[str, Any]:
+    strike = round(px * 0.95)
+    cost = round(px * 0.02, 2)
+    return {
+        "name": "Protective Put",
+        "type": "Defensive",
+        "expiry": _nearest_monthly_expiry(cfg.default_dte_days).isoformat(),
+        "legs": [{"type": "PUT", "side": "LONG", "strike": strike}],
+        "estimates": {"cost": cost, "floor": strike},
+        "why": ["Downside hedge"],
+        "disclaimer": "Estimates (model), not live quotes",
+    }
+
+
+def _iron_condor(px: float, cfg: Config) -> Dict[str, Any]:
+    width = cfg.bull_put_width
+    short_put = round(px * 0.95)
+    long_put = short_put - width
+    short_call = round(px * 1.05)
+    long_call = short_call + width
+    credit = round(width * 0.5, 2)
+    return {
+        "name": "Iron Condor",
+        "type": "Income",
+        "expiry": _nearest_monthly_expiry(cfg.default_dte_days).isoformat(),
+        "legs": [
+            {"type": "PUT", "side": "LONG", "strike": long_put},
+            {"type": "PUT", "side": "SHORT", "strike": short_put},
+            {"type": "CALL", "side": "SHORT", "strike": short_call},
+            {"type": "CALL", "side": "LONG", "strike": long_call},
+        ],
+        "estimates": {"net_credit": credit, "max_profit": credit, "max_loss": round(width - credit, 2)},
+        "why": ["Range-bound", "Income"],
+        "disclaimer": "Estimates (model), not live quotes",
+    }
+
+
+def pick_strategies(px: float, iv_rank: Optional[float], holding_shares: int, cfg: Config, bullish: bool = True) -> List[Dict[str, Any]]:
+    """Select strategies given price, volatility and bias."""
     strategies: List[Dict[str, Any]] = []
     high_iv = iv_rank is not None and iv_rank >= 30
 
-    if not high_iv:
-        strategies.append(_bull_call(px, cfg))
+    if bullish:
+        if not high_iv:
+            strategies.append(_bull_call(px, cfg))
+        else:
+            strategies.append(_bull_put(px, cfg))
+            strategies.append(_cash_secured_put(px, cfg))
+        if holding_shares >= 100:
+            strategies.append(_covered_call(px, cfg))
     else:
-        strategies.append(_bull_put(px, cfg))
-        strategies.append(_cash_secured_put(px, cfg))
-
-    if holding_shares >= 100:
-        strategies.append(_covered_call(px, cfg))
+        strategies.append(_protective_put(px, cfg))
+        strategies.append(_iron_condor(px, cfg))
 
     return strategies

@@ -48,8 +48,13 @@ if run_btn:
             if show_timing:
                 row["BuySignal"] = timing["buy_signal"]
                 row["TimingNote"] = timing["timing_note"]
+                row["NoBuyReason"] = timing.get("no_buy_reason")
+                if not timing["buy_signal"] and timing.get("no_buy_reason"):
+                    row["Reasons"] = timing["no_buy_reason"]
             if show_opts:
-                strategies = pick_strategies(ind["price"], None, 0, cfg) if timing["buy_signal"] and ind else []
+                strategies = pick_strategies(
+                    ind["price"], None, 0, cfg, timing["buy_signal"]
+                ) if ind else []
                 row["Strategies"] = strategies
         rows.append(row)
 
@@ -80,7 +85,12 @@ if run_btn:
             if r.get("Strategies"):
                 with st.expander(f"Strategies for {r['Ticker']}"):
                     for strat in r["Strategies"]:
-                        st.write(f"**{strat['name']}** (exp {strat['expiry']})")
+                        prefix = (
+                            "⚠ Not a buy — Defensive strategy idea: "
+                            if not r.get("BuySignal")
+                            else ""
+                        )
+                        st.write(f"{prefix}**{strat['name']}** (exp {strat['expiry']})")
                         st.write(strat["legs"])
                         st.write(strat["estimates"])
         st.caption("Estimates (model). Not live quotes.")

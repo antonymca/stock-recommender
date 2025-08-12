@@ -53,11 +53,13 @@ class StrategyResp(BaseModel):
     why: List[str]
     disclaimer: str
     precondition: Optional[str] = None
+    type: str
 
 
 class AnalyzeResponse(BaseModel):
     ticker: str
     buy_signal: bool
+    no_buy_reason: Optional[str] = None
     timing_note: str
     rationale: List[str]
     indicators: IndicatorResp
@@ -74,7 +76,9 @@ def _analyze_one(req: AnalyzeRequest) -> AnalyzeResponse:
     ind = compute_core_indicators(req.ticker)
     timing = compute_buy_timing(ind, cfg)
     base = analyze_ticker(req.ticker, cfg.min_price, cfg.min_avg_dollar_vol)
-    strategies = pick_strategies(ind["price"], req.iv_rank, req.holding_shares, cfg) if timing["buy_signal"] else []
+    strategies = pick_strategies(
+        ind["price"], req.iv_rank, req.holding_shares, cfg, timing["buy_signal"]
+    )
     signal_obj = {
         "raw": base.get("Recommendation", "HOLD"),
         "reasons": base.get("Reasons", "").split(" | ") if base.get("Reasons") else [],
@@ -82,6 +86,7 @@ def _analyze_one(req: AnalyzeRequest) -> AnalyzeResponse:
     resp_dict = {
         "ticker": req.ticker,
         "buy_signal": timing["buy_signal"],
+        "no_buy_reason": timing.get("no_buy_reason"),
         "timing_note": timing["timing_note"],
         "rationale": timing["rationale"],
         "indicators": ind,

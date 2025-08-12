@@ -30,3 +30,4 @@ def test_overbought_no_buy():
     cfg = Config(rsi_overbought=68.0)
     res = compute_buy_timing(ind, cfg)
     assert res["buy_signal"] is False
+    assert "RSI overbought" in res["no_buy_reason"]

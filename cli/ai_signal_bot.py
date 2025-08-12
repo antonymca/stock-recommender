@@ -64,11 +64,10 @@ def main() -> None:
                 if args.include_timing:
                     row["BuySignal"] = timing["buy_signal"]
                     row["TimingNote"] = timing["timing_note"]
+                    row["NoBuyReason"] = timing.get("no_buy_reason")
                 if args.include_options:
-                    strategies = (
-                        pick_strategies(ind["price"], None, 0, cfg)
-                        if timing["buy_signal"]
-                        else []
+                    strategies = pick_strategies(
+                        ind["price"], None, 0, cfg, timing["buy_signal"]
                     )
                     row["OptionStrategiesJSON"] = json.dumps(strategies)
             rows.append(row)
@@ -94,7 +93,7 @@ def main() -> None:
     ]
     extra_cols = []
     if args.include_timing:
-        extra_cols.extend(["BuySignal", "TimingNote"])
+        extra_cols.extend(["BuySignal", "TimingNote", "NoBuyReason"])
     if args.include_options:
         extra_cols.append("OptionStrategiesJSON")
     cols = base_cols + ([] if args.legacy_output else extra_cols)
