@@ -18,8 +18,10 @@ from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 import datetime as dt
 
+
 import pandas as pd
 import yfinance as yf
+
 
 
 @dataclass
@@ -81,6 +83,11 @@ def fetch_indicators(ticker: str, period: str = "1y") -> Dict[str, Any]:
 
     Returns a dictionary with the latest indicator values.
     """
+
+    if pd is None or yf is None:  # pragma: no cover - requires optional deps
+        raise ImportError("pandas and yfinance are required for fetch_indicators")
+
+
 
     data = yf.download(ticker, period=period, progress=False, auto_adjust=True)
     if data.empty:
