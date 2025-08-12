@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import List, Optional, Dict, Any
+from datetime import date
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +12,7 @@ from .config import Config
 from .analysis import compute_core_indicators, analyze_ticker
 from .timing import compute_buy_timing
 from .options import pick_strategies
+from .sell_decision import PositionType, Position, SellConfig, decide_sell
 
 app = FastAPI()
 app.add_middleware(
@@ -67,6 +69,31 @@ class AnalyzeResponse(BaseModel):
     selected_strategies: List[StrategyResp]
 
 
+class PositionModel(BaseModel):
+    ticker: str
+    type: PositionType
+    expiry: date
+    long_strike: float
+    short_strike: Optional[float] = None
+    entry_price: float
+    entry_date: date
+    quantity: int = 1
+
+
+class SellConfigModel(BaseModel):
+    stop_loss_pct: float = 0.40
+    take_profit_pct: float = 0.50
+    trail_pct: float = 0.35
+    time_stop_days: int = 5
+    breakeven_buffer: float = 2.0
+
+
+class SellDecisionRequest(BaseModel):
+    position: PositionModel
+    config: SellConfigModel = SellConfigModel()
+    prev_peak: Optional[float] = None
+
+
 @app.get("/health")
 def health() -> Dict[str, bool]:
     return {"ok": True}
@@ -108,3 +135,11 @@ class BatchRequest(BaseModel):
 @app.post("/batch", response_model=List[AnalyzeResponse])
 def batch(req: BatchRequest) -> List[AnalyzeResponse]:
     return [_analyze_one(item) for item in req.items]
+
+
+@app.post("/sell-decision")
+def sell_decision_endpoint(req: SellDecisionRequest) -> Dict[str, Any]:
+    pos = Position(**req.position.dict())
+    cfg_obj = SellConfig(**req.config.dict())
+    decision = decide_sell(pos, cfg_obj, prev_peak=req.prev_peak)
+    return decision
