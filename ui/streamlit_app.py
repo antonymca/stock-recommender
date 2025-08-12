@@ -2,8 +2,14 @@
 from __future__ import annotations
 
 import json
+import sys
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+
+# Ensure the repository root is on sys.path when running via `streamlit run`
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from signals import (
     Config,
