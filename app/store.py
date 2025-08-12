@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import datetime as dt
 from typing import List, Optional, Dict, Any
+import os
+from pathlib import Path
 
 from sqlalchemy import (
     create_engine,
@@ -17,8 +19,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, Session
 from pydantic import BaseModel, validator
 
-DB_PATH = "data/app.db"
-engine = create_engine(f"sqlite:///{DB_PATH}", future=True)
+# Ensure database directory exists
+db_dir = Path("data")
+db_dir.mkdir(exist_ok=True)
+
+DATABASE_URL = "sqlite:///data/positions.db"
+engine = create_engine(DATABASE_URL, future=True)
 Base = declarative_base()
 
 

@@ -83,3 +83,4 @@ Educational only; not financial advice.
 ```bash
 pytest
 ```
+uvicorn app.api:app --reload

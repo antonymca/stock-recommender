@@ -6,3 +6,6 @@ matplotlib
 requests
 python-dotenv
 APScheduler
+fastapi
+sqlalchemy
+uvicorn
