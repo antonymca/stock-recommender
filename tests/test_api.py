@@ -43,5 +43,6 @@ def test_analyze_endpoint(monkeypatch):
     data = resp.json()
     assert data["ticker"] == "TEST"
     assert data["buy_signal"] is True
+    assert data.get("no_buy_reason") is None
     assert data["signals"]["raw"] == "BUY"
     assert "price" in data["indicators"]

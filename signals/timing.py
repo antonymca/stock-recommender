@@ -32,8 +32,23 @@ def compute_buy_timing(ind: Dict[str, float], cfg: Config) -> Dict[str, Any]:
 
     buy_signal = trend_ok and momentum_ok and rsi_ok
 
+    no_buy_reasons: List[str] = []
+
     if not buy_signal:
         note = "Conditions not met"
+        if not trend_ok:
+            no_buy_reasons.append("Price < SMA200 (downtrend)")
+        if not momentum_ok:
+            if ind["macd"] <= ind["macd_signal"]:
+                no_buy_reasons.append("MACD bearish crossover")
+            elif ind["sma20"] <= ind["sma50"]:
+                no_buy_reasons.append("SMA20 < SMA50 (momentum weak)")
+        if not rsi_ok:
+            no_buy_reasons.append(
+                f"RSI overbought (>{cfg.rsi_overbought})"
+            )
+        if ind.get("avg_dollar_vol") is not None and ind["avg_dollar_vol"] < cfg.min_avg_dollar_vol:
+            no_buy_reasons.append("Low volume below threshold")
     else:
         rsi_val = ind["rsi14"]
         low, high = cfg.rsi_entry_band
@@ -44,4 +59,9 @@ def compute_buy_timing(ind: Dict[str, float], cfg: Config) -> Dict[str, Any]:
         else:
             note = "Scale-in 50% now."
 
-    return {"buy_signal": buy_signal, "timing_note": note, "rationale": rationale}
+    return {
+        "buy_signal": buy_signal,
+        "timing_note": note,
+        "rationale": rationale,
+        "no_buy_reason": "; ".join(no_buy_reasons) if no_buy_reasons else None,
+    }

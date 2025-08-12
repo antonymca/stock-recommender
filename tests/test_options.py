@@ -30,3 +30,11 @@ def test_csp_basis():
     strike = csp["legs"][0]["strike"]
     est = csp["estimates"]
     assert est["assigned_basis"] == round(strike - est["credit"], 2)
+
+
+def test_defensive_strategies():
+    cfg = Config()
+    strategies = pick_strategies(px=100, iv_rank=10, holding_shares=0, cfg=cfg, bullish=False)
+    names = [s["name"] for s in strategies]
+    assert "Protective Put" in names
+    assert any(s["type"] == "Defensive" for s in strategies)
