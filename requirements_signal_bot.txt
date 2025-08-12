@@ -3,3 +3,6 @@ pandas
 numpy
 streamlit
 matplotlib
+requests
+python-dotenv
+APScheduler
