@@ -1,0 +1,8 @@
+- ticker: NVDA
+  type: LONG_PUT
+  expiry: 2025-09-19
+  long_strike: 195
+  entry_price: 16.05
+  entry_date: 2025-08-12
+  quantity: 1
+  previous_peak: null
