@@ -20,6 +20,23 @@ streamlit run ui/streamlit_app.py
 ```
 Enter tickers and view signals, timing notes, and strategy ideas.
 
+## Positions Monitor
+Start the API and background monitor:
+
+```bash
+uvicorn app.api:app --reload
+```
+
+Open the Streamlit UI and use the *Positions Monitor* tab to add, edit, or delete
+option positions. Choose a polling interval (5/10/15 minutes or custom), enable
+notifications, and start the monitor. When a position's sell decision returns
+`SELL_NOW` a notification is sent and shown in the UI.
+
+Notifications require credentials in `.env` (`SLACK_WEBHOOK_URL`, `SMTP_*`,
+`TG_BOT_TOKEN`, `TG_CHAT_ID`).
+
+Educational only; not financial advice.
+
 ## Sell Decision Notifier
 Monitor open option positions and receive push alerts when the sell engine signals `SELL_NOW`.
 
