@@ -83,4 +83,31 @@ Educational only; not financial advice.
 ```bash
 pytest
 ```
-uvicorn app.api:app --reload
+
+## Backend Prototype
+
+A preliminary FastAPI application lives under `backend/apps/api`. It currently
+exposes a `/screen` endpoint implementing the QVM ranking example.
+
+### Running
+
+```bash
+uvicorn backend.apps.api.main:app --reload
+```
+
+POST a list of tickers with `quality`, `value` and `momentum` metrics to obtain
+sector neutral scores.
+
+### Environment
+
+Copy `.env.example` to `.env` and populate API keys as needed.
+
+### Makefile helpers
+
+```bash
+make dev       # start services via docker-compose
+make nightly   # run nightly job stub
+make intraday  # run intraday explainer stub
+make backtest  # run vectorbt demo stub
+```
+
