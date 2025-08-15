@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  portfolios  Portfolio[]
+  watchlists  Watchlist[]
+  priceAlerts PriceAlert[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  name        String
+  userId      String
+  totalValue  Float    @default(0)
+  totalReturn Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positions PortfolioPosition[]
+}
+
+model PortfolioPosition {
+  id           String   @id @default(cuid())
+  portfolioId  String
+  ticker       String
+  shares       Float
+  avgPrice     Float
+  currentPrice Float    @default(0)
+  totalValue   Float    @default(0)
+  totalReturn  Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  tickers   String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PriceAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  ticker      String
+  targetPrice Float
+  condition   String
+  isActive    Boolean  @default(true)
+  triggered   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StockAnalysis {
+  id              String   @id @default(cuid())
+  ticker          String   @unique
+  companyName     String
+  price           Float
+  change          Float
+  changePercent   Float
+  signal          String
+  score           Float
+  technicalData   Json
+  fundamentalData Json
+  recommendations String[]
+  riskLevel       String
+  targetPrice     Float
+  lastUpdated     DateTime @default(now())
+}

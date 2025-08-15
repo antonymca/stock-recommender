@@ -1,47 +1,39 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import Link from 'next/link';
+import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { Providers } from './providers'
+import { Toaster } from 'react-hot-toast'
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Stock Recommender',
-  description: 'AI-powered stock recommendation system',
-};
+  title: 'AI Stock Analysis Platform',
+  description: 'AI-powered stock analysis and portfolio management',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <nav className="bg-white shadow-sm border-b">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/" className="text-xl font-bold text-gray-900">
-                Stock Recommender
-              </Link>
-              <div className="flex space-x-4">
-                <Link href="/" className="text-gray-600 hover:text-gray-900">
-                  Dashboard
-                </Link>
-                <a 
-                  href="http://localhost:8000/docs" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  API Docs
-                </a>
-              </div>
-            </div>
-          </div>
-        </nav>
-        {children}
+        <Providers>
+          {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#1f2937',
+                color: '#fff',
+                border: '1px solid #374151',
+              },
+            }}
+          />
+        </Providers>
       </body>
     </html>
-  );
+  )
 }
